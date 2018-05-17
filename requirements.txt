@@ -1,0 +1,3 @@
+git+https://github.com/MarcoFavorito/rltg@master#egg=rltg
+git+https://github.com/MarcoFavorito/RLGames@master#egg=RLGames
+click
