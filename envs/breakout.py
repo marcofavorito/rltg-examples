@@ -31,19 +31,21 @@ TEMPORAL EVALUATORS
 """
 from abc import abstractmethod
 
-import click
 import numpy as np
 from RLGames.gym_wrappers.GymBreakout import GymBreakout
-from click import pass_context
 from flloat.base.Symbol import Symbol
 from flloat.parser.ldlf import LDLfParser
 from gym.spaces import Box, Tuple
+
+from rltg.utils.StoppingCondition import GoalPercentage
+
 from rltg.agents.TGAgent import TGAgent
-from rltg.agents.brains.TDBrain import Sarsa
-from rltg.agents.exploration_policies.RandomPolicy import RandomPolicy
 from rltg.agents.feature_extraction import FeatureExtractor, RobotFeatureExtractor
+from rltg.agents.policies.EGreedy import EGreedy
 from rltg.agents.temporal_evaluator.TemporalEvaluator import TemporalEvaluator
-from rltg.trainer import Trainer
+from rltg.trainers.TGTrainer import TGTrainer
+
+from utils import Config, name2algorithm
 
 
 class BreakoutRobotFeatureExtractor(RobotFeatureExtractor):
@@ -118,8 +120,9 @@ class BreakoutCompleteLinesTemporalEvaluator(TemporalEvaluator):
 
 
         string_formula = get_breakout_lines_formula(lines)
+        print(string_formula)
         f = parser(string_formula)
-        reward = 1000
+        reward = 10000
 
         super().__init__(BreakoutGoalFeatureExtractor(input_space, bricks_cols=bricks_cols, bricks_rows=bricks_rows),
                          set(lines),
@@ -168,51 +171,38 @@ class BreakoutCompleteColumnsTemporalEvaluator(BreakoutCompleteLinesTemporalEval
         """complete columns from left-to-right or right-to-left, depending on self.left_right"""
         return super().fromFeaturesToPropositional(features, action, axis=1, is_reversed=not self.left_right)
 
-if __name__ == '__main__':
-    env = GymBreakout(brick_cols=3, brick_rows=3)
 
-    '''Normal task - no temporal goal'''
-    # agent = RLAgent(BreakoutNRobotFeatureExtractor(env.observation_space),
-    #                 RandomPolicy(env.action_space, epsilon=0.1),
-    #                 QLearning(None, env.action_space, alpha=None, gamma=1.0, nsteps=100))
+name2robot_feature_ext = {
+    "N": BreakoutNRobotFeatureExtractor,
+    "S": BreakoutSRobotFeatureExtractor
+}
 
-    gamma = 1.0
-    on_the_fly = True
+name2temp_goals = {
+    "cols": [BreakoutCompleteColumnsTemporalEvaluator],
+    "rows": [BreakoutCompleteRowsTemporalEvaluator],
+    "both": [BreakoutCompleteColumnsTemporalEvaluator, BreakoutCompleteRowsTemporalEvaluator]
+}
+
+
+def run_experiment(config:Config, args):
+    env = GymBreakout(brick_cols=args.brick_cols, brick_rows=args.brick_rows)
+
+    # gamma=0.999 lambda_=0.99
     '''Temoral goal - specify how and what to complete (columns, rows or both)'''
     agent = TGAgent(BreakoutNRobotFeatureExtractor(env.observation_space),
-                    RandomPolicy(env.action_space, epsilon=0.1),# epsilon_start=1.0, decaying_steps=50000),
-                    Sarsa(None, env.action_space, alpha=None, gamma=gamma, nsteps=200),
+                    name2algorithm[config.algorithm](None, env.action_space, policy=EGreedy(config.epsilon),
+                                                     alpha=config.alpha, gamma=config.gamma, lambda_=config.lambda_),
+                    [BreakoutCompleteColumnsTemporalEvaluator(env.observation_space, bricks_rows=args.brick_rows,
+                                                              bricks_cols=args.brick_cols, left_right=True,
+                                                              gamma=config.gamma, on_the_fly=config.on_the_fly)],
+                    reward_shaping=config.reward_shaping)
 
-                    # Leave one of the following three option to see the differences:
-                    # 1) rows
-                    # 2) columns
-                    # 3) rows and columns
+    tr = TGTrainer(env, agent, n_episodes=config.episodes,
+                   resume=config.resume, eval=config.eval,
+                   # resume=True, eval=True,
+                   stop_conditions=(GoalPercentage(100, 0.2),),
+                   # renderer=PygameRenderer(0.01),
+                   data_dir=config.datadir
+                   )
 
-                    # 1
-                    # [BreakoutCompleteRowsTemporalEvaluator(env.observation_space, bricks_rows=env.brick_rows, bricks_cols=env.brick_cols, bottom_up=True, gamma=gamma, on_the_fly=on_the_fly)]
-
-                    # 2
-                    [BreakoutCompleteColumnsTemporalEvaluator(env.observation_space, bricks_rows=env.brick_rows, bricks_cols=env.brick_cols, left_right=True, gamma=gamma, on_the_fly=on_the_fly)]
-
-                    # 3
-                    # [BreakoutCompleteRowsTemporalEvaluator(env.observation_space, bricks_rows=env.brick_rows, bricks_cols=env.brick_cols, bottom_up=True, on_the_fly=on_the_fly, gamma=gamma),
-                    # BreakoutCompleteColumnsTemporalEvaluator(env.observation_space, bricks_rows=env.brick_rows, bricks_cols=env.brick_cols, left_right=True, on_the_fly=on_the_fly, gamma=gamma)]
-                    )
-
-
-    t = Trainer(env, agent,
-        n_episodes=10000,
-        resume= False,
-        eval=False,
-        # resume = True,
-        # eval = True,
-        # renderer=PygameRenderer(delay=0.01)
-    )
-    t.main()
-
-
-@click.command()
-@pass_context
-def cli(ctx):
-    config = ctx.obj
-    print(config.gamma)
+    stats, optimal_stats = tr.main()
