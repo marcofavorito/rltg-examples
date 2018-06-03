@@ -36,14 +36,14 @@ from RLGames.gym_wrappers.GymBreakout import GymBreakout
 from flloat.base.Symbol import Symbol
 from flloat.parser.ldlf import LDLfParser
 from gym.spaces import Box, Tuple
-
-from rltg.utils.StoppingCondition import GoalPercentage
-
+from rltg.agents.RLAgent import RLAgent
 from rltg.agents.TGAgent import TGAgent
 from rltg.agents.feature_extraction import FeatureExtractor, RobotFeatureExtractor
 from rltg.agents.policies.EGreedy import EGreedy
 from rltg.agents.temporal_evaluator.TemporalEvaluator import TemporalEvaluator
+from rltg.trainers.GenericTrainer import GenericTrainer
 from rltg.trainers.TGTrainer import TGTrainer
+from rltg.utils.StoppingCondition import GoalPercentage
 
 from utils import Config, name2algorithm
 
@@ -184,25 +184,63 @@ name2temp_goals = {
 }
 
 
-def run_experiment(config:Config, args):
-    env = GymBreakout(brick_cols=args.brick_cols, brick_rows=args.brick_rows)
+def _set_up_temporal_breakout(config, args, env, robot_feature_extractor, brain):
+    temporal_goals = []
+    if args.temp_goal == "cols" or args.temp_goal == "both":
+        by_cols = BreakoutCompleteColumnsTemporalEvaluator(env.observation_space, bricks_rows=args.brick_rows,
+                                                           bricks_cols=args.brick_cols, left_right=args.left_right,
+                                                           gamma=config.gamma, on_the_fly=config.on_the_fly)
+        temporal_goals.append(by_cols)
 
-    # gamma=0.999 lambda_=0.99
-    '''Temoral goal - specify how and what to complete (columns, rows or both)'''
-    agent = TGAgent(BreakoutNRobotFeatureExtractor(env.observation_space),
-                    name2algorithm[config.algorithm](None, env.action_space, policy=EGreedy(config.epsilon),
-                                                     alpha=config.alpha, gamma=config.gamma, lambda_=config.lambda_),
-                    [BreakoutCompleteColumnsTemporalEvaluator(env.observation_space, bricks_rows=args.brick_rows,
-                                                              bricks_cols=args.brick_cols, left_right=True,
-                                                              gamma=config.gamma, on_the_fly=config.on_the_fly)],
+    if args.temp_goal == "rows" or args.temp_goal == "both":
+        by_rows = BreakoutCompleteRowsTemporalEvaluator(env.observation_space, bricks_rows=args.brick_rows,
+                                                        bricks_cols=args.brick_cols, bottom_up=args.bottom_up,
+                                                        gamma=config.gamma, on_the_fly=config.on_the_fly)
+        temporal_goals.append(by_rows)
+
+    agent = TGAgent(robot_feature_extractor,
+                    brain,
+                    temporal_goals,
                     reward_shaping=config.reward_shaping)
 
     tr = TGTrainer(env, agent, n_episodes=config.episodes,
-                   resume=config.resume, eval=config.eval,
-                   # resume=True, eval=True,
-                   stop_conditions=(GoalPercentage(100, 0.2),),
-                   # renderer=PygameRenderer(0.01),
+                   stop_conditions=(GoalPercentage(100, 1.0),),
                    data_dir=config.datadir
                    )
+    return agent, tr
 
-    stats, optimal_stats = tr.main()
+
+def _set_up_simple_breakout(config, args, env, robot_feature_extractor, brain):
+    agent = RLAgent(robot_feature_extractor, brain)
+    tr = GenericTrainer(env, agent, n_episodes=config.episodes,
+                        stop_conditions=(GoalPercentage(100, 1.0),),
+                        data_dir=config.datadir)
+    return agent, tr
+
+
+def run_experiment(config:Config, args):
+    env = GymBreakout(brick_cols=args.brick_cols, brick_rows=args.brick_rows)
+
+    render = config.render
+
+    if config.resume:
+        trainer = GenericTrainer if args.temp_goal is None else TGTrainer
+        stats, optimal_stats = trainer.resume(render=render, verbosity=args.verbosity)
+    elif config.eval:
+        trainer = GenericTrainer if args.temp_goal is None else TGTrainer
+        stats, optimal_stats = trainer.eval(render=render, verbosity=args.verbosity)
+    else:
+        robot_feature_extractor = name2robot_feature_ext[args.robot_feature_space](env.observation_space)
+        brain = name2algorithm[config.algorithm](None, env.action_space, policy=EGreedy(config.epsilon),
+                                         alpha=config.alpha, gamma=config.gamma, lambda_=config.lambda_)
+
+
+        if args.temp_goal is None:
+            print("No temporal goal - simple Breakout")
+            agent, trainer = _set_up_simple_breakout(config, args, env, robot_feature_extractor, brain)
+        else:
+            agent, trainer = _set_up_temporal_breakout(config, args, env, robot_feature_extractor, brain)
+
+        stats, optimal_stats = trainer.main(render=render, verbosity=args.verbosity)
+
+    return stats, optimal_stats

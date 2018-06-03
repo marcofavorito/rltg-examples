@@ -1,13 +1,10 @@
 import argparse
-import os
-
-import click
-from RLGames.gym_wrappers.GymBreakout import GymBreakout
-from RLGames.gym_wrappers.GymSapientino import GymSapientino
-from rltg.agents.brains.TDBrain import QLearning, Sarsa
 
 import matplotlib.pyplot as plt
 import numpy as np
+from RLGames.gym_wrappers.GymBreakout import GymBreakout
+from RLGames.gym_wrappers.GymSapientino import GymSapientino
+from rltg.agents.brains.TDBrain import QLearning, Sarsa
 
 BREAKOUT = "breakout"
 SAPIENTINO = "sapientino"
@@ -29,7 +26,7 @@ name2algorithm = {
 class Config(object):
     def __init__(self, episodes=10000, algorithm=QLEARNING, gamma=0.99, alpha=0.1, epsilon=0.1,
                  lambda_=1.0, reward_shaping=True, on_the_fly=False, eval=False, resume=False,
-                 render=False, datadir="data"):
+                 render=False, datadir="data", verbosity=1):
         self.episodes = episodes
         self.algorithm = algorithm
         self.gamma =    gamma
@@ -42,6 +39,7 @@ class Config(object):
         self.resume = resume
         self.render =   render
         self.datadir = datadir
+        self.verbosity = verbosity
 
     def __str__(self):
         return "Configs:\n" + "\n".join(["\t{} = {}".format(k,v) for k, v in sorted(self.__dict__.items())])
