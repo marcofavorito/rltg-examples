@@ -45,6 +45,12 @@ name2module = {
     MINECRAFT: minecraft
 }
 
+def print_info(config, args):
+    with open("experiment.info", "w") as f:
+        f.write(str(config))
+        f.write("\n")
+        f.write(str(args))
+
 
 def main(cli_input):
     if type(cli_input)==str:

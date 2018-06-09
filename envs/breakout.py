@@ -33,6 +33,7 @@ from abc import abstractmethod
 
 import numpy as np
 from RLGames.gym_wrappers.GymBreakout import GymBreakout
+from RLGames.gym_wrappers.GymPygameWrapper import PygameVideoRecorder
 from flloat.base.Symbol import Symbol
 from flloat.parser.ldlf import LDLfParser
 from gym.spaces import Box, Tuple
@@ -219,9 +220,11 @@ def _set_up_simple_breakout(config, args, env, robot_feature_extractor, brain):
 
 
 def run_experiment(config:Config, args):
-    env = GymBreakout(brick_cols=args.brick_cols, brick_rows=args.brick_rows)
+    env = GymBreakout(brick_rows=args.brick_rows, brick_cols=args.brick_cols)
 
     render = config.render
+    if render:
+        env = PygameVideoRecorder(env, config.datadir+"/videos")
 
     if config.resume:
         trainer = GenericTrainer if args.temp_goal is None else TGTrainer

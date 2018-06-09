@@ -1,5 +1,6 @@
 import argparse
 
+from RLGames.gym_wrappers.GymPygameWrapper import PygameVideoRecorder
 from rltg.trainers.Trainer import Trainer
 
 parser = argparse.ArgumentParser(description='Execute a Reinforcement Learning process')
@@ -11,4 +12,6 @@ parser.add_argument('--datadir',    default="data",             help='Directory 
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    trainer = Trainer.eval(datadir=args.datadir, render=args.render, verbosity=args.verbosity)
+    trainer = Trainer.load(datadir=args.datadir)
+    trainer.env = PygameVideoRecorder(trainer.env, args.datadir)
+    trainer.main(eval=True, render=args.render, verbosity=args.verbosity)

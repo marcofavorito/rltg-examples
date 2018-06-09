@@ -1,4 +1,4 @@
-
+import argparse
 import csv
 import os
 import sys
@@ -9,7 +9,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-colors = iter(["b", "g", "r"])
+all_colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+
+parser = argparse.ArgumentParser(description='Plot the output from experiments')
+parser.add_argument('--title', type=str, default="")
+parser.add_argument('--labels', metavar='label', nargs='*', help="Labels to assign for every plot, must be len(labels)==len(paths).")
+parser.add_argument('--colors', metavar='color', nargs='*', default=all_colors, help="Colors to assign for every plot.")
+parser.add_argument('path_to_png', type=str, help="Where to save the plot")
+parser.add_argument('paths',    metavar='datadir', nargs='+', help="Directory where to retrieve statistics from")
+args = parser.parse_args()
 
 def _align_to_same_length(sequences_per_experiments):
 
@@ -46,20 +54,29 @@ def extract_experiment(experiment_folder_path):
     return data_rewards
 
 
-def plot_experiment(sequences, legend=""):
+def plot_experiment(sequences, color, legend=""):
     processed_data = []
     l = len(sequences[0])
     for seq in sequences:
         data = {"score": seq}
         df = pd.DataFrame(data)
 
-        moving_average = df.rolling(window=25).mean()
+        moving_average = df.rolling(window=100).mean()
         processed_data.append(moving_average.values.tolist())
+        # sns.tsplot(time=np.arange(l), data=[moving_average.values.tolist()], color=color, linestyle="-")
 
-    sns.tsplot(time=np.arange(l), data=processed_data, color=next(colors), linestyle="--", condition=legend)
+    sns.tsplot(time=np.arange(l), data=processed_data, color=color, linestyle="-", condition=legend, ci=90)
 
 if __name__ == '__main__':
-    experiment_folder_paths = sys.argv[1:]
+
+    experiment_folder_paths = args.paths
+    labels = args.labels
+    if labels is None or len(labels) != len(experiment_folder_paths):
+        labels = experiment_folder_paths
+    colors = args.colors
+    if colors is None or len(colors) != len(experiment_folder_paths):
+        colors = all_colors
+
     fig = plt.figure()
 
     datas = []
@@ -70,9 +87,11 @@ if __name__ == '__main__':
 
     datas = _align_to_same_length(datas)
     for idx, data in enumerate(datas):
-        plot_experiment(data, legend=experiment_folder_paths[idx])
+        plot_experiment(data, colors[idx], legend=labels[idx])
 
-    plt.show()
+    plt.title(args.title)
+    # plt.show()
+    plt.savefig(args.path_to_png)
 
 
 
