@@ -3,7 +3,9 @@ import shlex
 import sys
 
 from envs import minecraft, sapientino, breakout
-from envs.breakout import name2robot_feature_ext, name2temp_goals
+from envs.breakout import breakout_name2robot_feature_ext, breakout_name2temp_goals
+from envs.minecraft import minecraft_name2temp_goals, minecraft_name2robot_feature_ext
+from envs.sapientino import sapientino_name2temp_goals, sapientino_name2robot_feature_ext
 from utils import name2algorithm, check_in_float_range, BREAKOUT, SAPIENTINO, MINECRAFT, Config, SARSA
 
 parser = argparse.ArgumentParser(description='Execute a Reinforcement Learning process')
@@ -25,18 +27,23 @@ env_subparser.required = True
 
 # Breakout
 breakout_parser = env_subparser.add_parser(BREAKOUT, help="use the Breakout environment")
-breakout_parser.add_argument("--robot_feature_space", default="N", choices=sorted(name2robot_feature_ext.keys()), help="Specify the feature space for the robot. N=normal, S=reduced")
+breakout_parser.add_argument("--robot_feature_space", default="N", choices=sorted(breakout_name2robot_feature_ext.keys()), help="Specify the feature space for the robot. N=normal, S=reduced")
 breakout_parser.add_argument("--brick_rows", type=int, default=3, help="The number of brick rows.")
 breakout_parser.add_argument("--brick_cols", type=int, default=3, help="The number of brick columns.")
-breakout_parser.add_argument("--temp_goal",  choices=sorted(name2temp_goals.keys()),    help="Temporal goal. Remove bricks by columns, by rows, or both.")
+breakout_parser.add_argument("--temp_goal", choices=sorted(breakout_name2temp_goals.keys()), help="Temporal goal. Remove bricks by columns, by rows, or both.")
 breakout_parser.add_argument("--left_right", default=False, action='store_true',        help="From the left column to the right one. If not specified, the order is inverted.")
 breakout_parser.add_argument("--bottom_up",  default=False, action='store_true',        help="From the bottom row to the top one. If not specified, the order is inverted.")
 
 # Sapientino
 sapientino_subparser = env_subparser.add_parser(SAPIENTINO, help="use the Sapientino environment")
+sapientino_subparser.add_argument("--robot_feature_space", default="N", choices=sorted(sapientino_name2robot_feature_ext.keys()), help="Specify the feature space for the robot. N=normal, D=differential")
+sapientino_subparser.add_argument("--temp_goal", choices=sorted(sapientino_name2temp_goals.keys()), help="Temporal goal. Ordered visit of colors.")
+
 
 # Minecraft
 minecraft_subparser = env_subparser.add_parser(MINECRAFT, help="use the Minecraft environment")
+minecraft_subparser.add_argument("--robot_feature_space", default="N", choices=sorted(minecraft_name2robot_feature_ext.keys()), help="Specify the feature space for the robot. N=normal, D=differential")
+minecraft_subparser.add_argument("--temp_goal", choices=sorted(minecraft_name2temp_goals.keys()), help="Temporal goal. All the tasks.")
 
 
 name2module = {

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 
 DATADIR=data_44tasks
 python3 scripts/plot.py plots/b44-rows-comparison\

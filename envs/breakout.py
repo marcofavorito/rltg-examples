@@ -173,12 +173,12 @@ class BreakoutCompleteColumnsTemporalEvaluator(BreakoutCompleteLinesTemporalEval
         return super().fromFeaturesToPropositional(features, action, axis=1, is_reversed=not self.left_right)
 
 
-name2robot_feature_ext = {
+breakout_name2robot_feature_ext = {
     "N": BreakoutNRobotFeatureExtractor,
     "S": BreakoutSRobotFeatureExtractor
 }
 
-name2temp_goals = {
+breakout_name2temp_goals = {
     "cols": [BreakoutCompleteColumnsTemporalEvaluator],
     "rows": [BreakoutCompleteRowsTemporalEvaluator],
     "both": [BreakoutCompleteColumnsTemporalEvaluator, BreakoutCompleteRowsTemporalEvaluator]
@@ -233,7 +233,7 @@ def run_experiment(config:Config, args):
         trainer = GenericTrainer if args.temp_goal is None else TGTrainer
         stats, optimal_stats = trainer.eval(render=render, verbosity=args.verbosity)
     else:
-        robot_feature_extractor = name2robot_feature_ext[args.robot_feature_space](env.observation_space)
+        robot_feature_extractor = breakout_name2robot_feature_ext[args.robot_feature_space](env.observation_space)
         brain = name2algorithm[config.algorithm](None, env.action_space, policy=EGreedy(config.epsilon),
                                          alpha=config.alpha, gamma=config.gamma, lambda_=config.lambda_)
 
