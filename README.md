@@ -4,6 +4,22 @@ In this repository you can find some examples of Reinforcement Learning tasks (w
 
 Further details in [this document](https://github.com/MarcoFavorito/master-thesis/blob/1.0.0/thesis.pdf) (Chapter 8: Experiments).
 
+### Breakout: remove bricks in a given order
+The goal is given by using temporal logic formulas.
+Examples of temporal goals can be:
+
+- columns from left to right
+
+![](./docs/breakout-left-right.gif)
+
+- rows from the bottom to the top
+
+![](./docs/breakout-bottom-top.gif)
+
+- Both from the top to the bottom and from right to left
+
+![](docs/breakout-top-bottom-right-left.gif)
+
 ## Repository structure
 
 You have three command line utilities:
