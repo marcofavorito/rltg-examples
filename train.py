@@ -9,12 +9,12 @@ from envs.sapientino import sapientino_name2temp_goals, sapientino_name2robot_fe
 from utils import name2algorithm, check_in_float_range, BREAKOUT, SAPIENTINO, MINECRAFT, Config, SARSA
 
 parser = argparse.ArgumentParser(description='Execute a Reinforcement Learning process')
-parser.add_argument('--algorithm',      default=SARSA, choices=list(name2algorithm.keys()),              help="TD algorithm variant. The possible values are: '" + "', '".join(list(name2algorithm.keys())) + "'")
-parser.add_argument('--episodes',       default=10000, type=int,                                         help='Number of episodes.')
-parser.add_argument('--gamma',          default=1.0,   type=check_in_float_range(0.0, 1.0, True,  True), help="The discount factor. Must fall into [0, 1].")
-parser.add_argument('--alpha',          default=0.1,   type=check_in_float_range(0.0, 1.0, False, True), help="The learning rate. Must fall into (0, 1], or None (adaptive). Default: 0.1")
-parser.add_argument('--epsilon',        default=0.1,   type=check_in_float_range(0.0, 1.0, True,  True), help="The epsilon in eps-greedy. Must fall into [0, 1].")
-parser.add_argument('--lambda',         default=0.0,   type=check_in_float_range(0.0, 1.0, True,  True), help="Lambda in TD(Lambda). Default: 0 (classical TD)", dest="lambda_")
+parser.add_argument('--algorithm',      default=SARSA, choices=list(name2algorithm.keys()),                help="TD algorithm variant. The possible values are: '" + "', '".join(list(name2algorithm.keys())) + "'")
+parser.add_argument('--episodes',       default=10000, type=int,                                           help='Number of episodes.')
+parser.add_argument('--gamma',          default=1.0,   type=check_in_float_range(0.0, 1.0, False,  False),  help="The discount factor. Must fall into [0, 1].")
+parser.add_argument('--alpha',          default=0.1,   type=check_in_float_range(0.0, 1.0, False, True),   help="The learning rate. Must fall into (0, 1], or None (adaptive). Default: 0.1")
+parser.add_argument('--epsilon',        default=0.1,   type=check_in_float_range(0.0, 1.0, False,  False), help="The epsilon in eps-greedy. Must fall into [0, 1].")
+parser.add_argument('--lambda',         default=0.0,   type=check_in_float_range(0.0, 1.0, False,  False), help="Lambda in TD(Lambda). Default: 0 (classical TD)", dest="lambda_")
 parser.add_argument('--reward_shaping', action='store_true',        help="Enable reward shaping")
 parser.add_argument('--on_the_fly',     action='store_true',        help="Enable on-the-fly construction")
 parser.add_argument('--render',         action='store_true',        help='Enable rendering.')
@@ -30,7 +30,7 @@ breakout_parser = env_subparser.add_parser(BREAKOUT, help="use the Breakout envi
 breakout_parser.add_argument("--robot_feature_space", default="N", choices=sorted(breakout_name2robot_feature_ext.keys()), help="Specify the feature space for the robot. N=normal, S=reduced")
 breakout_parser.add_argument("--brick_rows", type=int, default=3, help="The number of brick rows.")
 breakout_parser.add_argument("--brick_cols", type=int, default=3, help="The number of brick columns.")
-breakout_parser.add_argument("--temp_goal", choices=sorted(breakout_name2temp_goals.keys()), help="Temporal goal. Remove bricks by columns, by rows, or both.")
+breakout_parser.add_argument("--temp_goal",  choices=sorted(breakout_name2temp_goals.keys()), help="Temporal goal. Remove bricks by columns, by rows, or both.")
 breakout_parser.add_argument("--left_right", default=False, action='store_true',        help="From the left column to the right one. If not specified, the order is inverted.")
 breakout_parser.add_argument("--bottom_up",  default=False, action='store_true',        help="From the bottom row to the top one. If not specified, the order is inverted.")
 

@@ -1,7 +1,7 @@
 #user defined
 agent_data
 .idea
-data_*
+data*/
 automata*
 experiments*
 

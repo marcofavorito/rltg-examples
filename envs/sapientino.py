@@ -124,8 +124,6 @@ sapientino_name2robot_feature_ext = {
 sapientino_name2temp_goals = {
     "colors": [SapientinoTemporalEvaluator],
     "colors_relaxed": [SapientinoTemporalEvaluator],
-    # "rows": [BreakoutCompleteRowsTemporalEvaluator],
-    # "both": [BreakoutCompleteColumnsTemporalEvaluator, BreakoutCompleteRowsTemporalEvaluator]
 }
 
 

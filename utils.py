@@ -59,7 +59,9 @@ def check_in_float_range(min_, max_, min_open=False, max_open=False):
 
 def _check_in_float_range(value, min_, max_, min_open=False, max_open=False):
     ivalue = float(value)
-    if ivalue <= 0:
+    left_ =  ivalue > min_ if min_open else ivalue >= min_
+    right_ = ivalue < max_ if max_open else ivalue <= max_
+    if not left_ or not right_:
         raise argparse.ArgumentTypeError("{} is not included in {} {}, {} {}".format(
             value, "(" if min_open else "[", min_, max_, "]" if max_open else "]"
         ))
