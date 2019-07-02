@@ -6,13 +6,14 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-flloat = "*"
+flloat = "==0.1.4.post1"
 matplotlib = "*"
 pandas = "*"
 gym="==0.10.5"
-rltg = "*"
+rltg = "==0.1.2.post1"
 seaborn = "*"
 rlgames = {git = "https://github.com/MarcoFavorito/RLGames",ref = "marco/master"}
+pythomata = "==0.1.5.post3"
 
 [requires]
 python_version = "3.7"
